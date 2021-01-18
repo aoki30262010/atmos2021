@@ -9,13 +9,13 @@ RSURF=     0.8
 ZY=	   60.     
 DTAU0=     0.5
 ZCON=      20
-P0=        7e-7
-PGO=       0.9
+P0=        1e-8
+PGO=       1.82
 G=	   980.         !Gravity (Mars=373., Earth=980., Gliese581d=1744.0, assuming 5.6 earth masses) 
 FAC=       4.0
 IO3=       0   			!Ozone?
 IUP=       1
-TG0=       350             !Surface temperature for IUP=1
+TG0=       377             !Surface temperature for IUP=1
 TSTRAT=    200.             	!Stratospheric temperature for IUP=1
 STARR=     "Sun"		!What star?
 ICONSERV=  0          	        !Type of energy conservation

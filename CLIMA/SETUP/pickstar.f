@@ -1,23 +1,23 @@
       SUBROUTINE pickstar(STARR,SOLINT)
-! Written by Ramses Ramirez 
+! Written by Ramses Ramirez
 
-! Stars after first 4 written in following manner: 
-!The first letter are the Metallicities A,B,and C. These correspond to -0.5,+0.0, and +0.5, respectively. 
-!The middle two numbers (30, 35, 40, 45, and 50)are logg. These correspond to 3.0, 3.5, 4.0, 4.5, and 5.0, respectively. 
+! Stars after first 4 written in following manner:
+!The first letter are the Metallicities A,B,and C. These correspond to -0.5,+0.0, and +0.5, respectively.
+!The middle two numbers (30, 35, 40, 45, and 50)are logg. These correspond to 3.0, 3.5, 4.0, 4.5, and 5.0, respectively.
 !The final two numbers are the temperatures, 26 to 72, which correspond to 2600 to 7200K.'
 
       INCLUDE 'CLIMA/INCLUDE/header.inc'
-      PARAMETER(NSOL=38)
+      PARAMETER(NSOL=39) !change 38 to 39 aoki2020
       DIMENSION SOLINT(NSOL), s(297) ! For 292 stars
       CHARACTER(5) :: STARR*5
-      real :: s, TOTAL 
+      real :: s, TOTAL, a, WL1,WL2
 
 
 
-!      read(10,*)  Removed labels so no need to skip line 
+!      read(10,*)  Removed labels so no need to skip line
         do I =1,NSOL
           read(10,*)a,WL1,WL2,(s(k), k=1,297)
-c          print *, read n,WL1,WL2,(s(k), k=1,296)
+         print *, read n,WL1,WL2,s(1)
           IF (STARR== "Sun") THEN
              SOLINT(I)=s(1)
 c             print *, SOLINT(I)
@@ -39,7 +39,7 @@ c             print *, SOLINT(I)
       ELSE IF (STARR =="A4526") THEN
              SOLINT(I)=s(6)
 !            print *, SOLINT(I)
- 
+
 
 
 
@@ -58,18 +58,18 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="A4530") THEN
              SOLINT(I)=s(10)
-!             print *, SOLINT(I)                
- 
+!             print *, SOLINT(I)
 
 
- 
+
+
       ELSE IF (STARR =="A4032") THEN
              SOLINT(I)=s(11)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="A4532") THEN
              SOLINT(I)=s(12)
 !             print *, SOLINT(I)
- 
+
 
 
 
@@ -98,7 +98,7 @@ c             print *, SOLINT(I)
       ELSE IF (STARR =="A4538") THEN
              SOLINT(I)=s(18)
 !             print *, SOLINT(I)
- 
+
 
 
       ELSE IF (STARR =="A4040") THEN
@@ -251,7 +251,7 @@ c             print *, SOLINT(I)
       ELSE IF (STARR =="A4570") THEN
              SOLINT(I)=s(50)
 !             print *, SOLINT(I)
- 
+
 
 
 
@@ -314,10 +314,10 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="B4530") THEN
              SOLINT(I)=s(66)
-!             print *, SOLINT(I)                
+!             print *, SOLINT(I)
       ELSE IF (STARR =="B5030") THEN
              SOLINT(I)=s(67)
-!             print *, SOLINT(I)                 
+!             print *, SOLINT(I)
 
 
       ELSE IF (STARR =="B3032") THEN
@@ -368,7 +368,7 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="B5036") THEN
              SOLINT(I)=s(82)
-!             print *, SOLINT(I)      
+!             print *, SOLINT(I)
 
 
       ELSE IF (STARR =="B3038") THEN
@@ -677,7 +677,7 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
        ELSE IF (STARR =="B4574") THEN
              SOLINT(I)=s(293)
-          
+
        ELSE IF (STARR =="B4576") THEN
              SOLINT(I)=s(294)
 
@@ -733,10 +733,10 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="C4530") THEN
              SOLINT(I)=s(186)
-!             print *, SOLINT(I)                
+!             print *, SOLINT(I)
       ELSE IF (STARR =="C5030") THEN
              SOLINT(I)=s(187)
-!             print *, SOLINT(I)                 
+!             print *, SOLINT(I)
 
 
       ELSE IF (STARR =="C3032") THEN
@@ -787,7 +787,7 @@ c             print *, SOLINT(I)
 !             print *, SOLINT(I)
       ELSE IF (STARR =="C5036") THEN
              SOLINT(I)=s(202)
-!             print *, SOLINT(I)      
+!             print *, SOLINT(I)
 
 
       ELSE IF (STARR =="C3038") THEN

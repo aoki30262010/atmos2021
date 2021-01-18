@@ -1,5 +1,3 @@
-
-
       SUBROUTINE IR(T,PF,P,FNC,CGAS)
 
 c jfk 6/27/08 The call sequence now contains both PF and P. This was
@@ -220,8 +218,8 @@ c         print *, 'IR stage4'!Aoki
 C Read the IR exponential sums
 c-jdh Moved to Clima.f 
 c      CALL IREXPSUMS(WEIGHT,xkappa)
-
-      DO 7 IL = 1,NLAYERS  !
+  !    print *, 'IR A' !Aoki2020d
+      DO 7 IL = 1,NLAYERS  
        
         TIL = AMIN1(T(IL),600.)
         TIL = AMAX1(TIL,100.)
@@ -272,7 +270,7 @@ c          print *, 'IR stage9'!Aoki
  8      CONTINUE
  7      CONTINUE  ! We are precalculating the INTERPOLATION for both INTERPIR AND INTERPCO2CIA for all layers 3/21/2012
 c          print *, 'IR stage10'!Aoki
-       
+!   print *, 'IR B' !Aoki2020d
      
 
 
@@ -319,7 +317,7 @@ c      print *, 'IR stage13'!Aoki
          TAUTOTAL(I) = 0.0
        ENDDO
 c      print *, 'IR stage14'!Aoki
-
+  !       print *, 'IR C' !Aoki2020d
         write(5552,2333)
 2333   format(3x, 'TAUGH2OCO101', 3x, 'PATH_L', 9x, 'Temp@top',
      &    8x, 'KAPPA', 9x, 'FH2O', 9x,'INT', 4x, 'NST')
@@ -419,7 +417,7 @@ c       ENDIF
 
 !      DO 2 K1=1, 8 ! Old Co2
 !      DO 3 K2=1, 8 ! Old H2O
-       
+       !     print *, 'IR D' !Aoki2020d
 
 !----------------BPS WATER CONTINUUM 8/30/2012 c-rr
         ! PF(IL) are pressures at the layer boundaries. P(IL) are pressures in the middle of the layers
@@ -472,7 +470,7 @@ c 4444        format(1p3e14.5,2(2x,i3)) !EWS - albel not used
          
     !    IF ((I.eq.15).and.(IL.ge.97))sumcont = sumcont + TAUCONTIN(IL)   ! only add approximately 1 km. tau ~ 0.1 or so for Earth
                   ENDDO  ! ENDS LAYER LOOP IN CONTINUUM
-    
+               !   print *, 'IR E' !Aoki2020d
 !            ENDIF
    !      IF (I.eq.15)print *, sumcont  
 !---------------------------------------------------------           
@@ -746,12 +744,14 @@ c 444      format(1p5e14.5,2x,i3)    ! EWS - label not used
 !        print *, AV(I), SUM_TPRIND,I
 !        read(*,*)
      
-c      write(*,*)
-*******Ozone absorption
+c     write(*,*)
+! print *, 'IR F'           !Aoki2020d
+*******Ozone absorption !ignore Aoki2020(add cc)
         IF (I.EQ.18) THEN
 !                 sumoz = 0.  
-      DO K4=1,8
-        TWGHTT(K4) = TWGHT*WEIGHTOZC(K4)
+       DO K4=1,8
+       TWGHTT(K4) = TWGHT*WEIGHTOZC(K4)
+!   print *, 'IR F1' !Aoki2020d
       DO IL=1,NLAYERS
 !        CGAS(IL,4) = CGAS(IL,4)*.97d0
          
@@ -773,8 +773,8 @@ c      TAUGIR(IL) =TAUGIR(IL) + TAUGOZ(IL)
         ! print *, TAUGOZ(IL)
         ! pause
                ENDDO
-      
-     
+       !  print *, 'IR G0' !Aoki2020d
+          
       DO IL=1, NLAYERS
            Fwater = FI(1,IL) ! Needed for rayley
            FCO2 = FI(2,IL)  ! Needed for rayley
@@ -784,10 +784,10 @@ c      TAUGIR(IL) =TAUGIR(IL) + TAUGOZ(IL)
            CONS0=6.0255E23/GNEW(IL)   ! Put constant to use for rayleigh scattering calculation in IR
            CONS=CONS0/AM
            CRAY(IL)=CONS*DPLYR(IL)
+       
            CALL RAYLEY(SIGR, AL2,Fwater,FNCR) ! Call rayley to output SIGR at a given altitude and wavelength, inputting AL2. 5/8/2011
            TAUR(IL)= SIGR*CRAY(IL)  ! SIGR is a scalar now 5/8/2011
            TAUSIR(IL) = TAUASIR(IL) + TAUR(IL)
-       
 
           TAULAMIR(IL) = TAUAEXTIR(IL) + TAUGIR(IL) + TAUSIR(IL)
           ASYIR(IL) = ASYAIR(I,IL) 
@@ -798,8 +798,9 @@ c      TAUGIR(IL) =TAUGIR(IL) + TAUGOZ(IL)
 !       print *,'k1.....',K1
 
 c jfk  6/25/08  Include TAUTOP in the call sequence to do the upper BC.
-c      This requires the use of PF, not P.
-      TAUTOP = TAULAMIR(1)*PF(1)/(PF(2)-PF(1))
+c     This requires the use of PF, not P.
+c      TAUTOP = TAULAMIR(1)*PF(1) 
+      TAUTOP = TAULAMIR(1)*PF(1)/(PF(2)-PF(1)) !PF2 = PF1 = 0 BAG!!! Aoki2020
       TAUTOP = AMIN1(TAUTOP,1.)
 
 
@@ -824,9 +825,9 @@ c        print *, 'IR stage30'!Aoki
         ENDIF
 ***************
          
-          
+       
 !55555      CONTINUE
-      
+     
 
       DO IL=1, NLAYERS
            Fwater = FI(1,IL) ! Needed for rayley
@@ -841,7 +842,7 @@ c        print *, 'IR stage30'!Aoki
            TAUR(IL)= SIGR*CRAY(IL)  ! SIGR is a scalar now 5/8/2011
            TAUSIR(IL) = TAUASIR(IL) + TAUR(IL)
           TAULAMIR(IL) = TAUAEXTIR(IL) + TAUGIR(IL) + TAUSIR(IL)
-
+          
              
 !                       if ((I.eq.20).and.(IL.eq.1).and.(K1.eq.16))then
 !            print *, 'TAUOZ=',TAUGOZ(IL),'TAUGIR=',
@@ -873,7 +874,7 @@ c        print *, 'IR stage30'!Aoki
 c 23656          format(1p8e14.5,0p,3(2x,i3)) !EWS - label not used
 
       ENDDO
-    
+! print *, PF(1),PF(2),TAULAMIR(1),PF(2)-PF(1)
 c      print *, 'IR stageA'!Aoki
 
 !               if((I.eq.10).and.(K1.eq.16))then
@@ -898,7 +899,7 @@ c      print *, 'IR stageA'!Aoki
 !          pause
 c
 c jfk  6/25/08  Include TAUTOP in the call sequence to do the upper BC
-      TAUTOP = TAULAMIR(1)*PF(1)/(PF(2)-PF(1))
+       TAUTOP = TAULAMIR(1)*PF(1)/(PF(2) - PF(1)) 
       TAUTOP = AMIN1(TAUTOP,1.)
 c      print *, 'IR stageB1'!Aoki
       CALL DELTA2STRIR(SRFALBIR,ASYIR,TAULAMIR,OMG0IR,
@@ -906,7 +907,7 @@ c      print *, 'IR stageB1'!Aoki
 c      print *, 'IR stageB'!Aoki    
 C
 C
- 
+!      print *, 'IR J' !Aoki2020d 
 !                if((I.eq.9).and.(K1.eq.16))then
 !         print *,'OUT OF DELTA2STR', FUP(1), FDN(1)
 !         pause

@@ -1,18 +1,17 @@
-        SUBROUTINE interpsolar(Temp,p1,j,kmatrix_solco2,kmatrix_solh2o,
-     &                         kmatrix_solco)
- 
+      SUBROUTINE interpsolar(Temp,p1,j,kmatrix_solco2,kmatrix_solh2o
+     & ,kmatrix_solco)
 c       by Ramses Ramirez 8/28/2012
 c-rr    i is wavelength counter and j is the altitude counter used in solar, respectively.
 
         INCLUDE 'CLIMA/INCLUDE/header.inc'
-        PARAMETER(NSOL=38,IK=8)
-        REAL TempR,tempg(8),press(8),p1,kappa_solh2o, kappa_solco2, 
+        PARAMETER(NSOL=39,IK=8)
+        REAL TempR,tempg(8),press(8),p1,kappa_solh2o, kappa_solco2,
      &  kmatrix_solco2, kmatrix_solh2o,Temp,kappa_solco,kmatrix_solco !Aoki2020
         DIMENSION KMATRIX_SOLH2O(NSOL,IK), KMATRIX_SOLCO2(NSOL,IK)
         DIMENSION KMATRIX_SOLCO(NSOL,IK) !Aoki2020
         INTEGER j !EWS - i not used
-        DATA tempg/100., 150., 200., 250., 300., 350., 400., 600./ 
-        DATA press/.00001, .0001, .001, .01, 0.1, 1., 10., 100./ 
+        DATA tempg/100., 150., 200., 250., 300., 350., 400., 600./
+        DATA press/.00001, .0001, .001, .01, 0.1, 1., 10., 100./
        COMMON/PRESS/BETIR1(4,5,NSOL),BETIR2(4,5,NSOL),
      &       kappa_solh2o(NSOL,8,8,IK), kappa_solco2(NSOL,8,8,IK), ! Added new kappa matricies for each of CO2 and H2O coefficients. 8/26/2012
      &       kappa_solco(NSOL,8,8,IK) !Aoki2020
@@ -22,39 +21,38 @@ c-rr    i is wavelength counter and j is the altitude counter used in solar, res
 c       Assigning TempR to temp (due to variable name overuse)
         TempR=Temp
 
-
-C        There are separate loops for pressures lower than 1e-4 bar,  
-C        for pressures higher than 1 bar, and those in between. For 
+C        There are separate loops for pressures lower than 1e-4 bar,
+C        for pressures higher than 1 bar, and those in between. For
 C        the pressures in between:
 
            j=j !EWS just to avoid compilation warnings
            Do L=1,8
-                LS=L 
-                 
+                LS=L
+
              if (p1.le.press(L))then
-                 exit!If an individial p greater than curent p set Ls=9 
+                 exit!If an individial p greater than curent p set Ls=9
                  else
              LS = 9
                  endif
            enddo
-           
+
 
               Do M=1,8  ! For 8 temperatures
-                 MS=M  
+                 MS=M
                 if (TempR.lt.tempg(M))then
-                exit  
+                exit
                 else
                 MS=9
-        endif                
+        endif
               enddo
-              
+
 
 
 c       For pressures within the grid
         IF(LS.eq.1) THEN
           LS1 = LS        ! P1 is at or below the lowest grid pressure
         FY = 1.
-       
+
         ELSEIF(LS.ge.8) THEN !        For pressures outside of grid:
          LS = 8                ! P1 is at or above the highest grid pressure
         LS1 = 8
@@ -75,7 +73,7 @@ C
         FX = 1.
         ELSEIf(MS.ge.9)THEN ! For temperatures outside of the grid:
          MS=MS-1                !TempR is at or above the highest grid Temperature
-        MS1=MS                
+        MS1=MS
         FX = 1.
         ELSE
         MS1=MS-1  !This calculates MS1 for values within a temperature range (MS between 2 and 3)
@@ -96,7 +94,7 @@ C
             AK44L=LOG10(kappa_solco2(INTVS,MS1,LS,IK1))
 
 
-            AK111L=LOG10(kappa_solco(INTVS,MS1,LS1,IK1))  ! These terms from CO coefficient data table Aoki2020                                               
+            AK111L=LOG10(kappa_solco(INTVS,MS1,LS1,IK1))  ! These terms from CO coefficient data table Aoki2020
             AK222L=LOG10(kappa_solco(INTVS,MS,LS1,IK1))
             AK333L=LOG10(kappa_solco(INTVS,MS,LS,IK1))
             AK444L=LOG10(kappa_solco(INTVS,MS1,LS,IK1))
@@ -111,10 +109,15 @@ C
             AKLLL=FX*FY*AK333L+FX*(1.-FY)*AK222L+
      &                (1.-FX)*FY*AK444L+(1.-FX)*(1.-FY)*AK111L
 
-            
+
             kmatrix_solh2o(INTVS,IK1)=10**AKL  ! H2O kmatrix.  This needs to be interpolated over altitude (j)
             kmatrix_solco2(INTVS,IK1)=10**AKLL  ! CO2 kmatrix. This needs to be interpolated over altitude (j)
-            kmatrix_solco(INTVS,IK1)=10**AKLLL !CO kmatrix. added by Aoki 2020  
+            kmatrix_solco(INTVS,IK1)=10**AKLLL !CO kmatrix. added by Aoki 2020
+!            if (kmatrix_solco(INTVS,IK1) .le. 1.E-40)THEN
+!              kmatrix_solco(INTVS,IK1)=0.
+!            end if
+!            print *,'================interp==================='
+!            print *,kmatrix_solco(INTVS,IK1),kmatrix_solco2(INTVS,IK1)
 !             if(INTVS .eq. 9)then
 !                print *,kmatrix_solh2o(INTVS,IK1),Temp,p1
 !                print *,IK1,MS,MS1,LS,LS1
@@ -122,7 +125,7 @@ C
 !             endif
 
 
-  
+
 !             print *,kmatrix_solco2(INTVS,IK1),IK1,INTVS
           ENDDO  ! ends AK loop
 
@@ -135,7 +138,8 @@ c                  print *, 'KMATRIX=', KMATRIX(INTVS,j,8)
 c                  endif
 
           ENDDO  ! interval loop
-        
+
 
         RETURN
+
         END

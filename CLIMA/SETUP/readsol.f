@@ -1,4 +1,4 @@
-      SUBROUTINE READSOL (RAMDAA) 
+      SUBROUTINE READSOL
 c-as This subroutine reads the incoming flux from the Sun and the
 c-as parameters for the subroutine SOLAR and CONVEC
 
@@ -8,29 +8,29 @@ c-as parameters for the subroutine SOLAR and CONVEC
       PARAMETER(NT=76, MT=36)
       PARAMETER(NSOL=39, NGS=8) !gna changed to 8 from 7 !NGS change 38 to 39 Aoki2020
       PARAMETER(IK=8) ! Changed to 8 sums 3/15/2012
-      REAL kappa_solh2o, kappa_solco2,alch4,kappa_solco ! Declaring H2O and CO2 arrays as real 8/27/2012 
+      REAL kappa_solh2o, kappa_solco2,alch4,kappa_solco ! Declaring H2O and CO2 arrays as real 8/27/2012
                                             ! EWS - press(8) and temp(3) not used 8/26/2015
       !Add kappa_solco Aoki2020
 
-!      DATA kappa/5472*0./ 
-!c-rr  The weights below here are those for CO2 in the near-IR with new coefficients 
-!c     from Richard R. Freedman's eb.txt 10/11/2010 
-!      DATA weight/1.6523105144e-1, 3.0976894856e-1, 3.0976894856e-1, 
-!     2 1.6523105144e-1, 8.6963711284e-3, 1.6303628872e-2, 
-!     3 1.6303628872e-2, 8.6963711284e-3/  
+!      DATA kappa/5472*0./
+!c-rr  The weights below here are those for CO2 in the near-IR with new coefficients
+!c     from Richard R. Freedman's eb.txt 10/11/2010
+!      DATA weight/1.6523105144e-1, 3.0976894856e-1, 3.0976894856e-1,
+!     2 1.6523105144e-1, 8.6963711284e-3, 1.6303628872e-2,
+!     3 1.6303628872e-2, 8.6963711284e-3/
 
 c-rr  The 8 weights below are used for both the CO2 and H2O kspectrum coefficients 8/26/2012
-c      DATA weightco2_h2oSOL/1.65231051440290516E-01, 
-c     &  3.09768948559709378E-01,  
-c     &  3.09768948559709378E-01, 
-c     & 1.65231051440290516E-01, 
-c     &  8.69637112843634277E-03, 
-c     &  1.63036288715636482E-02, 
-c     &  1.63036288715636482E-02, 
+c      DATA weightco2_h2oSOL/1.65231051440290516E-01,
+c     &  3.09768948559709378E-01,
+c     &  3.09768948559709378E-01,
+c     & 1.65231051440290516E-01,
+c     &  8.69637112843634277E-03,
+c     &  1.63036288715636482E-02,
+c     &  1.63036288715636482E-02,
 c     &  8.69637112843634277E-03 /
 
       DIMENSION ALPHAZ(4,2),BETAZ(4,2),NPROB(2),
-     &  NG(2),SIGG(4,2,NSOL),RAMDAA(NSOL)
+     &  NG(2),SIGG(4,2,NSOL),RAMDAA(NSOL)! add RAMDAA Aoki2020
 
       COMMON/ABLOK/LTYPE(NF,3),XH2O(NF),YH2O(NF),XCO2(NF),YCO2(NF),
      2  AXH(NF),AYH(NF),BXH(NF),BYH(NF),AXC(NF),AYC(NF),BXC(NF),
@@ -61,24 +61,24 @@ c     &  8.69637112843634277E-03 /
      &  DSVC(MT)
       COMMON/PRESS/BETIR1(4,5,NSOL),BETIR2(4,5,NSOL),
      &     kappa_solh2o(NSOL,8,8,IK), kappa_solco2(NSOL,8,8,IK),
-     &     kappa_solco(NSOL,8,8,IK) !Aoki2020 
-! Added new kappa matricies for each of CO2 and H2O coefficients. 8/26/2012 
+     &     kappa_solco(NSOL,8,8,IK) !Aoki2020
+! Added new kappa matricies for each of CO2 and H2O coefficients. 8/26/2012
 !     Added O3 absorption coefficient vector (plus c and d vectors), first 14 terms. Added O2 coefficient 3/19/2012
 c     COMMON/CBLOK/FO2,FN2,FCO2,FAR,FCH4
- 
+
        COMMON/AOZONE/BETAO3(nsol),  BETAO2(2),
      &   WGHTO2(NSOL,2)
 
       COMMON/CBLOK/FO2,FN2,FCO2,FAR,FCH4,FC2H6,FNO2,FI(NS1,ND),FH22,FCO !Aokic
-          
+
           COMMON/BPS_SOL/s_absol(NSOL), f_absol(NSOL), TDsol(NSOL),  ! Added COMMON BLOCK FOR BPS CONTINUUM FOR SOLAR  8/30/2012
      &  Bssol(NSOL), Bfsol(NSOL)
-         
+
           CHARACTER :: DIRINOUT*8, DIRDATA*10
       COMMON/DIR/DIRINOUT,DIRDATA
-     
+
 c-rr Created new solardata common block to hold the new kspectrum mixed CO2-H2O coefficients
-!      COMMON/SOLARDATA/kmatrix_sol(NSOL,IK), weightco2_h2oSOL(16), 
+!      COMMON/SOLARDATA/kmatrix_sol(NSOL,IK), weightco2_h2oSOL(16),
 !     &  weights(2,NSOL,IK) ! c-rr Added weightco2_h2O data array and weights array that combines co2_h2o and Ch4 weight arrays 3/19/2012
 
 
@@ -138,7 +138,7 @@ C
       READ(3,304) (DRDTL(M,N),M=M1,M2)
       READ(3,304) (BETAM(M,N),M=M1,M2)
   59  READ(3,304)
-  58  CONTINUE 
+  58  CONTINUE
       CLOSE (3)
  303  FORMAT(1X,F6.0,1P10E11.4)
  304  FORMAT(7X,1P10E11.4)
@@ -185,7 +185,7 @@ C  READING of new data
 C  I corresponds to interval 22-38
 C  J corresponds to Temps 112,188,295 [Kelvin]
 C  K corresponds to pressures 0.0001,0.001,0.01,0.1,1.0 [Bars]
-        
+
         DO I=1,17
         READ(21,*)
         READ(21,*)
@@ -201,7 +201,7 @@ C  K corresponds to pressures 0.0001,0.001,0.01,0.1,1.0 [Bars]
         END DO
         END DO
         close (21)
-        
+
 902   FORMAT(15X,1PE11.5,2X,E11.5,2X,E11.5,2X,
      1 E11.5,2X,E11.5,2X,E11.5)
 
@@ -217,13 +217,13 @@ C  READING of Kathy Rages data (near IR CH4 exponential sums)
  173  CONTINUE
       do i=1,4
        READ(8,*)
-      enddo 
+      enddo
       DO 174 I = 1,17
        READ(8,182) GAMMAEXP295(I)
        READ(8,176) (ALPHACH4T295(K,I),K = 1,4)
        READ(8,179) (BETACH4T295(K,I),K = 1,4)
  174  CONTINUE
-     
+
 c Reading Karkoshka data for CH4
       do i=1,5
         READ(8,*)
@@ -233,7 +233,7 @@ c Reading Karkoshka data for CH4
        READ(8,181) (BETACH4Kark(K,I),K = 1,4)
        READ(8,177)
  172  CONTINUE
-     
+
  176  FORMAT(4X,F6.4,4x,F6.4,4x,F6.4,4x,F6.4)
  177  FORMAT(/)
 c 178  FORMAT(//) !EWS - not used
@@ -250,7 +250,7 @@ C   READ EXPONENTIAL SUM DATAFILES
       DO 156 I=31,NF
        READ(8,501)
  156   READ(8,500) ((BETH2O(K,L,I),K=1,4),L=1,5)
-   
+
 C ***** TEMPORARY FILL FOR H2O EXP SUMS AT 10 BARS *****
       DO 57 K=1,4
       DO 57 I=1,30
@@ -299,11 +299,11 @@ C
          DO 437 L=1,2
             NPR(L,I) = NPROB(L)
             NGAS(L,I) = NG(L)
-            DO 438 K=1,4    
+            DO 438 K=1,4
                SIGG(K,L,I) = BETAZ(K,L)
                WGHT(K,L,I) = ALPHAZ(K,L)
  438        CONTINUE
- 437     CONTINUE  
+ 437     CONTINUE
  435  CONTINUE
       IF (FCO2 .LT. 0.1) THEN
          NPR(2,15) = 1
@@ -316,11 +316,11 @@ C
          DO 441 L=1,5 !gas number
             DO 442 I=1,13 !wavelength
                BETIR1(K,L,I)=SIGG(K,1,I)
-               
+
  442        CONTINUE
             DO 443 I=1,20
                BETIR2(K,L,I)=SIGG(K,2,I)
-               
+
  443        CONTINUE
  441     CONTINUE
  440  CONTINUE
@@ -330,29 +330,29 @@ C
          RAMDAA(I) = ALAMBDA(I) !Aoki2020
  1145 CONTINUE
 
-    
-      
-      
+
+
+
 C-rr Temporarily replacing Ackerman's solar fluxes with Gliese581 solar fluxes 11/05/2010
-c        read(10,*) ! skips one line before reading 
+c        read(10,*) ! skips one line before reading
 c       DO I =1,38
 c          read(10,100)SOLINT(I)
 c          print 100, SOLINT(I)
 c        ENDDO
 c 100  format(6x,1pe11.4)
-       
+
 c      DO I=1,38
 c        print *, SOLINT(I)
 c      ENDDO
-      
+
 C   RETURN
-C        
+C
 c        DO I=1,13
 c                DO K=1,4
 c                print 500, (BETIR1(k,l,i), l=1,5)
 c                ENDDO
 c        ENDDO
-C        
+C
 C-rr Test to print out BETIR1
 C                print *, "BETIR1 INTERVALS"
 C        DO 800 I=1,13
@@ -371,15 +371,15 @@ C                DO 803 K=1,4
 C                print 600, (BETIR2(K,L,I), L=1,5)
 C 803                CONTINUE
 C 802        CONTINUE
-        
+
 C 600    format(5(1pe11.4,1x))
 C 700         format(4x,'ksums',8x,'copy',8x,'copy',8x,'copy',8x,'copy')
-             
+
 
 C-rr It turns out that above BETIR1 matrix is just the kcoefficients (betas) for gas 1(H20) and at least Intervals 1-13   C    are read from Tom Ackerman's solar38.pdat.
 C    BETIR2 is just the betas for gas 2. Intervals 21-38 of BETIR2 are Kasting's CO2 kcoefficients from nearIRexpsums.pdat
-C    (minus intervals 22 and 23 where there is no CO2 absorption) whereas Intervals 1-20 pertain to Ackerman's 
-C   (solar_data_38.pdat). 
+C    (minus intervals 22 and 23 where there is no CO2 absorption) whereas Intervals 1-20 pertain to Ackerman's
+C   (solar_data_38.pdat).
 C    10/27/10
 
 !-----------------------------------------------------------------------------------
@@ -387,7 +387,7 @@ C-rr READ in the new separate CO2 and H2O absorption coefficient matrix for sola
 
 
 
-! Initializing k-coefficient array !co table & kappaco Aoki2020  
+! Initializing k-coefficient array !co table & kappaco Aoki2020
         do i = 1,NSOL
                  do it = 1, 8 ! 8 temperatures
                             do ip = 1,8  ! 8 pressures
@@ -418,13 +418,14 @@ C-rr READ in the new separate CO2 and H2O absorption coefficient matrix for sola
                             read(16,*) ! skip 3 more lines to read data
                             read(16,*)
                             read(16,*)
-                            read(401,*) ! skip 3 more lines to read data                                
+                            read(401,*) ! skip 3 more lines to read data
                             read(401,*)
                             read(401,*)
                             do ip = 1,8  ! 8 pressures
                             read(15,*)a,(kappa_solh2o(i,it,ip,k),k=1,IK)
                             read(16,*)a,(kappa_solco2(i,it,ip,k),k=1,IK)
                             read(401,*)a,(kappa_solco(i,it,ip,k),k=1,IK)
+
                           enddo ! ends pressure loop
                 enddo ! ends temperature loop
         enddo  ! ends interval loop
@@ -433,19 +434,19 @@ C-rr READ in the new separate CO2 and H2O absorption coefficient matrix for sola
 
 
 
-              
+
 
 C-rr READ in Richard Freedman's CO2 KAPPA matrix for solar intervals 17-38 10/11/2010
 !        read(19,*)
-!              do i=17,NSOL   
-!                read(19,*) 
-!             do it=1,3 
-!                   read(19,*) 
-!                            do ip=1,6   
-!                              read(19,301),(kappa(i,it,ip,k), k=1,8) 
+!              do i=17,NSOL
+!                read(19,*)
+!             do it=1,3
+!                   read(19,*)
+!                            do ip=1,6
+!                              read(19,301),(kappa(i,it,ip,k), k=1,8)
 !                      do k=1,8
 !                kappa(i,it,ip,k)=kappa(i,it,ip,k)
- 
+
 !                  enddo
 !              do k=1,8
 !                 kappa(i,it,ip,k) = amax1(kappa(i,it,ip,k),1.e-60)
@@ -454,24 +455,24 @@ C-rr READ in Richard Freedman's CO2 KAPPA matrix for solar intervals 17-38 10/11
 !                           enddo
 !                     enddo
 !         enddo
-         
+
 !      i=38
 !      it=3
-c      do ip=1,1   
-c            print 301,(kappa(i,it,ip,k), k=1,8) 
+c      do ip=1,1
+c            print 301,(kappa(i,it,ip,k), k=1,8)
 c      enddo
 
 c      print *, 'BETCO2=',BETCO2(1,1,48)
 c      print *, 'BETCO2=', BETIR2(1,1,31)
-      
+
 ! 301    format(7x,1pe11.4,2x,1pe11.4,6(1x, 1pe11.4))
- 
+
 C-rr COMBINING ALPHACH4Kark and ALPHACH4NEW weights into one ALCH4 matrix 10/23/2010
 
       DO I = 1,21
          DO K=1,4
          ALCH4(K,I) = ALPHACH4Kark(K,I)
-         ENDDO   
+         ENDDO
       ENDDO
       DO I=22,38
           DO K=1,6
@@ -503,15 +504,15 @@ C-rr COMBINING ALPHACH4Kark and ALPHACH4NEW weights into one ALCH4 matrix 10/23/
 !                READ(4,*)
 !                READ(4,*)
 !                 READ(4,*)aa, bb, ccc(I), d(I)
-                
+
 !                READ(4,350)
-                
+
 !                if (I.le.8) THEN ! For intervals 1-8, 3rd column is O3. inv ATM-CM And then convert to cm^2/molecule by dividing coefficients by Loschimdt's value
 !                               BETAO3(I) = ccc(I)/2.687E19
-!                    
+!
 !                else ! Intervals 9-14, 4th column is O3. inv ATM-CM Convert to cm^2/molecule by dividing coefficients by Loschmidt's value
 !                       BETAO3(I) = d(I)/2.687E19
-                       
+
 !                endif
 !        ENDDO
 ! 350    format(2(/))
@@ -519,12 +520,12 @@ C-rr COMBINING ALPHACH4Kark and ALPHACH4NEW weights into one ALCH4 matrix 10/23/
 ! C-rr reads in sole O2 absorption coefficient in interval 16 3/19/2012
 !
 !        read(4,360)
-!        read(4,*) aa,bb,ff,gg  
+!        read(4,*) aa,bb,ff,gg
 !        CLOSE (4)
 
 
         BETAO2 = 0.38*4.0999998E-06/2.687E19 !C-rr O2 absoprtion coefficient times single weight of 0.38 (b) divided by Loschmidt's is the actual absorption coefficient value 3/19/2012
-        
+
 c 360    format(7(/))  ! EWS - not used
 
        DO I = 1,38
@@ -533,11 +534,11 @@ c 360    format(7(/))  ! EWS - not used
                 weights(2,I,K) = 0. ! CO2
                 weights(3,I,K) = 0. ! CH4
            ENDDO
-       ENDDO  
+       ENDDO
 
 
 ! C-rr combining the co2, h2o,and ch4 weights into one matrix (weights). Gas 1 is H2O. Gas 2 is CO2. Gas 3 is methane. O2 and O3 do not have weights. 8/26/2012
-        DO I = 1,38  
+        DO I = 1,38
                DO K = 1,IK
                weights(1,I,K) = weightco2_h2oSOL(K) !  Weights for co2 and h2o coefficients, 1 is water and 2 is CO2
                weights(2,I,K) = weights(1,I,K) ! weights are the same for Co2 and H2O coeffficients 8/26/2012
@@ -546,29 +547,29 @@ c 360    format(7(/))  ! EWS - not used
 
         DO I = 1,21
             DO K = 1,4
-                  weights(3,I,K) = ALCH4(K,I) ! weights array for Ch4 coefficients (gas 2)                
+                  weights(3,I,K) = ALCH4(K,I) ! weights array for Ch4 coefficients (gas 2)
             ENDDO
         ENDDO
-        
+
 
         DO I = 22,38
               DO K =1,6
              weights(3,I,K) = ALCH4(K,I) ! weights array for Ch4 coefficients (gas 2)
-                
+
               ENDDO
         ENDDO
 
 !           Initializing O2 weights array c-rr 5/8/2012
-        
+
             DO I = 1,NSOL
                 WGHTO2(i,1) = 1.  ! No BETAs for 1st K, except for interval 16, so make 1 to not cancel out other gas weights
                 WGHTO2(i,2) = 0. ! ALL BETAs for 2nd k are zero so the associated weights should be zero, save for Interval 16 weight
             ENDDO
-       
+
 
 !               Only in interval 16 are there oxygen weights. Only one of them. c-rr 5/8/2012
-                WGHTO2(16,1) = 0.38 
-                WGHTO2(16,2) =  0.62  
+                WGHTO2(16,1) = 0.38
+                WGHTO2(16,2) =  0.62
 !                print *, WGHTO2(16,1)
 !                pause
 
@@ -579,7 +580,7 @@ c 360    format(7(/))  ! EWS - not used
               OPEN(unit = 39, file = DIRDATA//'/SOLAR_BPS.dat')
 
 ! initialize arrays
- 
+
                 do i = 1,NSOL
                         s_absol(i) = 0.0d0
                         f_absol(i) = 0.0d0
@@ -587,7 +588,7 @@ c 360    format(7(/))  ! EWS - not used
                         Bssol(i) = 0.0d0
                         Bfsol(i) =0.0d0
                 enddo
- 
+
 
                 do i = 1,5
                         read(39,*)
@@ -599,7 +600,7 @@ c 360    format(7(/))  ! EWS - not used
      &                Bfsol(j), TDsol(j)
 !                print *, s_absol(j), f_absol(j), Bssol(j), Bfsol(j), TDsol(j)
                 enddo
-
+                 print *, kappa_solco(39,8,8,1) !Aoki2020kd
 !-----------------------------------------------------------------------------------
 
        RETURN
@@ -608,4 +609,3 @@ c      print 600, (ALCH4(K,I), K=1,6)
 c      ENDDO
 c 600  format(f6.4,3x,5(f6.4,3x))
       END
-

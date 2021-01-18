@@ -1,0 +1,17 @@
+program rensiu
+  implicit none
+  double precision A,B,C
+
+  A = 0
+  B = -10
+  C = 100
+
+  do while (A = 0)
+     if abs(B) < 5 then
+     A = 1
+  else if abs(B) > 5 then
+     C = C - 1
+     B = C
+  end if
+
+     

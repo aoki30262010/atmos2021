@@ -1,4 +1,4 @@
-      SUBROUTINE SOLAR(TF,LAST,FNC,NST,RAMDAA)
+      SUBROUTINE SOLAR(TF,LAST,FNC,NST,CGAS_CO)
 C  Add NO2 to the mix of gases
 C
 C  FORMERLY TOM ACKERMANS SOLAR ROUTINE 'RADRIV'. ALL SUBROUTINES UNDER
@@ -17,18 +17,19 @@ c  This subroutine contains CH4
 !gna - changed ngs to 8 to account for c2h6 !change to 9 Aokic
       PARAMETER(NS=3, NS1=NS+2, NS4=NS+5) ! Adding parameter statement needed for FI(NS1,ND) 5/23/2011
       REAL kmatrix_solh2o, kmatrix_solco2, weights, KAPPALAYERSOL_CO2,
-     &     KAPPALAYERSOL_H2O,    !EWS - removed BETA because it wasn't used 9/4/2015
-     &     KAPPALAYERSOL_CO  !Aoki2020
-C
+     &     kmatrix_solco,KAPPALAYERSOL_H2O,    !EWS - removed BETA because it wasn't used 9/4/2015
+     &     KAPPALAYERSOL_CO ,kappa_solco2,kappa_solco,kappa_solh2o !Aoki2020
+      real BETACO2,BETACO,BETAH2O
       real sigsig1,sigsig7 !Aokic
        COMMON/SOLARBLK/AMU0,SRFALB,OMG0A(NSOL,ND-1),
      &  ASYA(NSOL,ND-1),TAUAER(NSOL),SIGERT(NSOL),FMA(NSOL),PF(ND),
      &  ALAMBDA(NSOL),CGAS(ND,NGS),FUPSOL(ND),FDNSOL(ND),
      &  NGAS(2,NSOL),WGHT(4,2,NSOL),NPR(2,NSOL),SOLINT(NSOL),
-     &  TAULAM(ND-1),ASY(ND-1),OMG0(ND-1),FMT(ND-1),QEXT(NSOL,ND-1)
-
+     &  TAULAM(ND-1),ASY(ND-1),OMG0(ND-1),FMT(ND-1),QEXT(NSOL,ND-1),
+     &  TAUCO(NSOL,ND-1),TAUCO2(NSOL,ND-1),TAUH2O(NSOL,ND-1), !Aoki2020
+     &  TAUALL(NSOL,ND-1)!Aoki2020
         COMMON/DATASOLAR/weightco2_h2oSOL(8), weights(3,NSOL,IK)   ! new common block for weights and interpolated coefficients for CO2, H2O, and methane. 8/26/2012
-     
+
 
 
       COMMON/ALTBLOK/DALT(ND-1),RADIUS(ND-1),PARTICLES(ND),RAER(ND),
@@ -36,7 +37,7 @@ C
        COMMON/PRESS/BETIR1(4,5,NSOL),BETIR2(4,5,NSOL),
      &     kappa_solh2o(NSOL,8,8,IK), kappa_solco2(NSOL,8,8,IK),
      &     kappa_solco(NSOL,8,8,IK)  !Aoki2020
-! Added new kappa matricies for each of CO2 and H2O coefficients. 8/26/2012 
+! Added new kappa matricies for each of CO2 and H2O coefficients. 8/26/2012
 
       COMMON/AOZONE/BETAO3(nsol), BETAO2(2),
      &   WGHTO2(NSOL,2)
@@ -52,6 +53,8 @@ c     COMMON/CBLOK/FO2,FN2,FCO2,FAR,FCH4
      & ALPHACH4NEW(6),BETACH4NEW(17,3,5,6),ALCH4(6,38)
       COMMON/WAVE/AV(NF),LAM(NF)
       COMMON/NO2BLOK/SIGNO2(NSOL)
+      DIMENSION CGAS_CO(ND) !Aoki2020
+
 
 
 
@@ -61,7 +64,7 @@ c     COMMON/CBLOK/FO2,FN2,FCO2,FAR,FCH4
 !     & ,kmatrix_sol(NSOL,IK) ! c-rr Added weightco2_h2O data array and weights array that combines co2_h2o and Ch4 weight arrays 3/19/2012! c-rr Added 16 weight coefficient array for CO2-H2O kspectrum mixed absorption coefficiets, 3/15/2012
 
 
-  
+
       COMMON/CPHEAT/CPO2(ND),CPCO2(ND), CPN2(ND), CPH2O(ND),
      & CPN(ND), CPNT(ND) ,CPCO(ND)
 
@@ -71,14 +74,14 @@ c     COMMON/CBLOK/FO2,FN2,FCO2,FAR,FCH4
      &  FUP(ND),FDN(ND),FUPA(ND),FDNA(ND),ALPHACH4(4,38),
      &  BETACH4(4,38),TAUEXT(ND-1),TAUEXTID(ND-1),GAMMACH4(38)
       DIMENSION TF(ND),Fdiff(ND),SolHeat(NSOL,ND), PF1(ND)
-      DIMENSION FNC(ND), KMATRIX_SOLH2O(NSOL,IK), 
-     &  KMATRIX_SOLCO2(NSOL,IK),self_absol(NSOL,ND),  
+      DIMENSION FNC(ND), KMATRIX_SOLH2O(NSOL,IK),
+     &  KMATRIX_SOLCO2(NSOL,IK),self_absol(NSOL,ND),
      &   forn_absol(NSOL,ND),  ! Added self and foreign water continuum solar coefficients 8/30/2012 c-rr
      &     SOLAV(NSOL+1),        ! Added solar intervals
-     &     KMATRIX_SOLCO(NSOL,IK) !Aoki2020 
+     &     KMATRIX_SOLCO(NSOL,IK) !Aoki2020
       DIMENSION TAUCONTSOL(ND),  ! Added water continuum tau for solar 8/30/2012 ! Removed W(NF), ALAM(NF), AVOLD(NF) since they weren't used 9/4/2015 - EWS
      &     KAPPALAYERSOL_CO2(NSOL,ND,IK),KAPPALAYERSOL_H2O(NSOL,ND,IK), ! Turning SIGR into a scalar quantity not an array 5/23/2011
-     &     KAPPALAYERSOL_CO(NSOL,ND,IK) !Aoki2020 
+     &     KAPPALAYERSOL_CO(NSOL,ND,IK) !Aoki2020
 !     Added KAPPALAYERSOL which is KMATRIX_SOL looped over all heights
 c     DIMENSION W(NF), ALAM(NF), AVOLD(NF),SIGR(NSOL)
 C     DIMENSION ALAM(NF), AVOLD(NF),SIGR(NSOL)
@@ -90,16 +93,16 @@ C
 
        DATA SOLAV/42087 ,36363 ,35087 ,32562 ,30376 ,29308 ,25641 ,
      & 22222 ,18518 ,18198 ,17649 ,16528 ,16000 ,15000 ,14470 ,13300 ,
-     & 12790 ,11870 ,11220 ,10400 , 9650 , 9350 , 8850 , 8315 , 7650 , 
-     & 6990 , 6390 , 5925 , 5370 , 4950 , 4540 , 4030 , 3760 , 3425 , 
+     & 12790 ,11870 ,11220 ,10400 , 9650 , 9350 , 8850 , 8315 , 7650 ,
+     & 6990 , 6390 , 5925 , 5370 , 4950 , 4540 , 4030 , 3760 , 3425 ,
      &     3087 , 2796 , 2494 , 2397 , 2200 , 1961/ ! Solar intervals 9 - 38 have BPS water continuum. Converted to wavenumbers 8/31/2012
-       ! 39th area's limit is 1961 cm-1(5.1 micro) !Aoki2020 
+       ! 39th area's limit is 1961 cm-1(5.1 micro) !Aoki2020
 ! Aoki memo : SOLAV converted from wavenum to wavelength. NOT equal to Kato et al 1999.
-       C2 = 1.4388 ! constant for BPS continuum (in cmK) 8/31/2012 , c-rr     
+       C2 = 1.4388 ! constant for BPS continuum (in cmK) 8/31/2012 , c-rr
 C
-     
-       
-      print *, ALAMBDA(1) !Aoki2020d
+
+!       print *, kappa_solco(39,8,8,1) !Aoki2020kd
+!      print *, ALAMBDA(1) !Aoki2020d
 
 C  Define the NO2 mixing ratio
       COUNTERS = 0
@@ -109,15 +112,15 @@ C  Define the NO2 mixing ratio
  1140 CONTINUE
 C
 
-       
-       
+
+
       DO 1145 IL = 1,NLAYERS
          PMID(IL) = 0.5*(PLAYR(IL+1)+PLAYR(IL))
-        
+
  1145 CONTINUE
 
 C
-         
+
 
 !      CALL RAYLEY(SIGR)   Commenting out this RAYLEY CALL AND MOVING IT DOWN INSIDE ALTITUDE LOOP. 5/23/2011
 
@@ -184,34 +187,41 @@ C PLUGGING IN CH4 DATA FROM KARKOSHKAs file
 C
 
 ! c-rr modified interp routine for mixed kspectrum CO2-H2O absorption coefficients. Also, this loop feeds in altitude (j) for the interpolated kmatrix, 3/15/2012
-      
-          print *, 'CALL INTERPSOLAR' !Aoki2020d   
-     
+
+!          print *, 'CALL INTERPSOLAR' !Aoki2020d
+!        print *, '====solar===='
+!        print *, kappa_solco(39,8,8,1) !Aoki2020kd
        DO j = 1,ND
              CALL interpsolar(TF(j),P(j),j,
-     &      kmatrix_solco2, kmatrix_solh2o,kmatrix_solco)     
-        DO K =1,IK               
+     &      kmatrix_solco2, kmatrix_solh2o,kmatrix_solco)
+
+        DO K =1,IK
 
           DO I = 1, NSOL
           kappalayersol_co2(I,J,K) = kmatrix_solco2(I,K)  ! Interpolated CO2 coefficients stored in kappalayersolco2
 
 !          if(I <=8)then
-              
+
 !             kappalayersol_h2o(I,J,K) = kappalayersol_h2o(1,J,K)  ! Interpolated H2O coefficients stored in kappalayersolh2o
 !          else
           kappalayersol_h2o(I,J,K) = kmatrix_solh2o(I,K) ! Interpolated H2O coefficients stored in kappalayersolh2o
-          kappalayersol_co(I,J,K) = kmatrix_solco(I,K)  ! Interpolated CO coefficients stored in kappalayersolco Aoki2020    
+          kappalayersol_co(I,J,K) = kmatrix_solco(I,K)  ! Interpolated CO coefficients stored in kappalayersolco Aoki2020
 !          endif
+  !         print *, '===============solar==============='
+  !         print *,kmatrix_solco(I,K),kmatrix_solco2(I,K)
+!          print *,kappalayersol_co(I,J,K),kappalayersol_co2(I,J,K)
 !          print *,kmatrix_solh2o(I,K),kappalayersol_h2o(I,J,K),I,K,j
    !       IF(I .EQ. 10)then
    !       print 3456,KAPPALAYERSOL(I,J,K),TF(J),P(j),FI(1,J),I,J,K
    !       pause
    !       endif
           ENDDO
-          
+
        ENDDO
+
       ENDDO
-       print *, 'END INTERPSOLAR' !Aoki2020d 
+
+!       print *, 'END INTERPSOLAR' !Aoki2020d
 
 c 3456     format(1p4e14.5,3(2x,i3)) !EWS - not used
 
@@ -225,29 +235,29 @@ c 3456     format(1p4e14.5,3(2x,i3)) !EWS - not used
             FUPA(J) = 0.0
             FDNA(J) = 0.0
  1160    CONTINUE
-             
+
              AL2 = ALAMBDA(I)**2  ! Took AL2 out of Rayley in order to do altitude loop and get AL2 for each individual mixing ratio.
-             print *, AL2,ALAMBDA(1) !Aoki2020d
-!2233              format(6(f9.5))            
+!             print *, AL2,ALAMBDA(1) !Aoki2020d
+!2233              format(6(f9.5))
 
 ! 5/23/2011
        DO 1165 IL=1,NLAYERS
 c-rr Recalculation of mixing rations for the noncondensibles
 c FI(1,J)= water
 c FI(2,J)= carbon dioxide
-c FI(3,J) = methane           
-           
-   
+c FI(3,J) = methane
+
+
 c The condensibles are water and carbon dioxide. Water convects for planets closer in and CO2 condenses for planets further out
 c FNC = noncondensible mixing ratio = FN2 + FO2 + FCH4 + FAR = 1 - FH20 - FCO2  5/3/2011
            Fwater = FI(1,IL) ! Needed for rayley
            FCO2 = FI(2,IL)  ! Needed for rayley
            FNCR = FNC(IL)  ! This is the FNC that is passed into rayley, one layer at a time  c-rr 6/7/2012
-            
-c-----------------------------------------------------------------------------------------           
+
+c-----------------------------------------------------------------------------------------
            CALL RAYLEY(SIGR, AL2,Fwater,FNCR) ! Call rayley to output SIGR at a given altitude and wavelength, inputting AL2. 5/23/2011
            ! 8/31/2011 removed FNC from rayley argument
-           
+
 c     TAUR(IL)= SIGR(I)*CRAY(IL)
            TAUR(IL)= SIGR*CRAY(IL) ! SIGR is a scalar now 5/23/2011
         r = RAER(IL)
@@ -276,8 +286,8 @@ c       PRINT *, 'TAUAABSTOTALVIS'
 c       PRINT *, TAUAABSTOTAL
 C       PRINT *, 'QEXTVIS      OMG0A      ALT'
 C       DO IL=1,NLAYERS
-C       PRINT *, QEXT(I,IL), OMG0A(I,IL), ALT(IL) 
-C       ENDDO 
+C       PRINT *, QEXT(I,IL), OMG0A(I,IL), ALT(IL)
+C       ENDDO
 C      PRINT *, '***************************'
        ENDIF
 C
@@ -299,13 +309,13 @@ c   19   FORMAT(/1X,1PE10.4) !EWS - not used
          END IF
 
 
-         print *, 'CHECK A' !Aoki2020d
+!         print *, 'CHECK A' !Aoki2020d
 !----------------BPS WATER CONTINUUM 8/30/2012 c-rr
                  IF(I.le.8)THEN
                  DO IL = 1,NLAYERS
                  TAUCONTSOL(IL) = 0.0d0
                  ENDDO
-                 ENDIF      
+                 ENDIF
 
                 IF (I.ge.9) THEN  ! water continuum only in solar intervals 9 - 38
 !                IF (((I.ge.30).and.(I.le.31)).or.((I.ge.34).and.(I.le.38)))THEN
@@ -315,7 +325,7 @@ c   19   FORMAT(/1X,1PE10.4) !EWS - not used
 
                 PH2O = P(IL)*FI(1,IL)  ! water partial pressure (in bars)
                 PDRY = P(IL)*(1.-FI(1,IL)) !partial pressure dry air (in bars)
-                RHOW = (PH2O/1.)*(296./TF(IL))  ! RHO_water. Different from MT_CKD? Why does BPS use Ph2o instead of P? 
+                RHOW = (PH2O/1.)*(296./TF(IL))  ! RHO_water. Different from MT_CKD? Why does BPS use Ph2o instead of P?
                 RHOF = (PDRY/1.)*(296./TF(IL))  ! RHO_foreign. Different from MT_CKD? Why does BPS use Pdry instead of P?
 
 !                   Bssol(i) = 0.0d0
@@ -324,28 +334,28 @@ c   19   FORMAT(/1X,1PE10.4) !EWS - not used
                 self_absol(I,IL) = RHOW*(s_absol(i)*
      &                            exp(TDsol(i)*(296.-TF(IL)))
      &         + RADFLD*Bssol(i)) ! Self broadening coefficient with radiation field and temperature dependence included (cm^2/molecule)
-                forn_absol(I,IL) = RHOF*(f_absol(i) + Bfsol(i))*RADFLD 
+                forn_absol(I,IL) = RHOF*(f_absol(i) + Bfsol(i))*RADFLD
                    ! foreign broadening coefficient with radiation field and temperature dependence included (cm^2/molecule)
 
                 ABSCONT = self_absol(I,IL) + forn_absol(I,IL)
                 TAUCONTSOL(IL) = ABSCONT*CGAS(IL,6) !optical depth
 !                TAUCONTSOL(IL) = 0.0d0
               ENDDO  ! ENDS LAYER LOOP IN CONTINUUM
-                 
-              ENDIF! water continuum only in solar intervals 9 - 38         
+
+              ENDIF! water continuum only in solar intervals 9 - 38
 
 !------------------------------------------------------------------
-                  print *, 'CHECK B ' !Aoki2020d 
+!                  print *, 'CHECK B ' !Aoki2020d
 
 
 
 C-rr  This section of code will do intervals 1-16 using Tom Ackerman's CO2 coefficients (WGHT arrays)
-C     and 17-38 using Richard Freedman's (weight array). ALPHACH4(K3,I) for Intervals 1-21 and 
+C     and 17-38 using Richard Freedman's (weight array). ALPHACH4(K3,I) for Intervals 1-21 and
 C     ALPHACH4NEW(K3) for Intervals 22-38 have been combined into ALCH4(K3,I). 10/23/2010
 
 
 
-C     ALPHACH4(K3,I) for Intervals 1-21 and 
+C     ALPHACH4(K3,I) for Intervals 1-21 and
 C     ALPHACH4NEW(K3) for Intervals 22-38 have been combined into ALCH4(K3,I). 10/23/2010
 
 
@@ -355,30 +365,30 @@ C     ALPHACH4NEW(K3) for Intervals 22-38 have been combined into ALCH4(K3,I). 1
 !            ENDIF
 !         DO 1170 K1=1,NPR1              !**BEGIN NPR1 LOOP** K1 is gas 1 from solar38
 !            DO 1175 K2=1,NPR2           !**BEGIN NPR2 LOOP** K2 is gas 2 from solar38
-!               IF(I.lt.17) THEN              
-!               AP=WGHT(K1,1,I)*WGHT(K2,2,I)*ALCH4(K3,I) 
+!               IF(I.lt.17) THEN
+!               AP=WGHT(K1,1,I)*WGHT(K2,2,I)*ALCH4(K3,I)
 !               ELSE
 !               AP = WGHT(K1,1,I)*weight(K2)*ALCH4(K3,I)
 !               END IF
-  
+
                SUMAP = 0.
 !       DO 1190 KO2 = 1,2 ! For 2 oxygen weighting terms
 !     DO 1180 K3 = 1, NPR3   !**BEGIN NPR3 LOOP** K3 is gas 2 (CH4) from nearIR_expsums.pdat
                DO 10101 KK = 1, IK ! KK is kspectrum CO coefficients from ktable_co.dat Aoki2020
-                DO 1175 K2 = 1, IK  ! K2 is kspectrum CO2 coefficients from solar38_h2o.dat  
-                     DO 1170 K1 = 1, IK  ! K1 is kspectrum H2O coefficients from solar38_h2o.dat        
+                DO 1175 K2 = 1, IK  ! K2 is kspectrum CO2 coefficients from solar38_h2o.dat
+                     DO 1170 K1 = 1, IK  ! K1 is kspectrum H2O coefficients from solar38_h2o.dat
 
                    AP = weights(1, I, K1)*weights(2,I,K2)   ! Only H2O & CO2
-     &                * weights(1,I,KK) !The weight of CO is the same as CO2 and H2O Aoki2020        
+     &                * weights(1,I,KK) !The weight of CO is the same as CO2 and H2O Aoki2020
 !                   AP = weights(1, I, K1)*weights(2,I,K2)*
 !     &             WGHTO2(I,KO2)  ! Only convolve with O2
 !                   AP = weights(1, I, K1)*weights(2,I,K2)*
 !     &             weights(3,I,K3)*WGHTO2(I,KO2)  ! Only convolve with O2
 ! coefficients in interval 16 c-rr 5/20/2012.
 
-                  
-                       print *, 'CHECK B1' !Aoki2020d 
-                   
+
+!                       print *, 'CHECK B1' !Aoki2020d
+
 !               IG1=NGAS(1,I)  ! IG1 is mixed CO2/H2O and IG2 is CH4.
 !               IG2=NGAS(2,I)
 C
@@ -391,16 +401,16 @@ c  Add the NO2 absorption in here. Scale everything to CH4.
              CGAS(IL,2) = AMAX1(CGAS(IL,2),1.E-20)
 
              TAUG(IL) = SIGNO2(I)*CGAS(IL,2)*FNO2/FCH4 * 2.687E24  ! c-rr Change CGAS CH4 number from 5 to 2. 3/19/2012
-             
+
 c         IF (I .eq. 7) THEN
 c         PRINT 99923, IL, FNO2, TAUG(IL), SIGNO2(I)
 c         ENDIF
 c 99923 FORMAT("in solar.f:",I5, 1P10E10.2) !EWS - label not used
-     
+
             IF(I<22) THEN
             TAUG(IL)= TAUG(IL) + BETACH4(K3,I)*CGAS(IL,2) ! c-rr change gas CH4 number from 5 to 2. 3/19/2012
-            END IF           
-            
+            END IF
+
          IF(I>21) THEN
          II = I - 21
 C*********************ADDING STUFF HERE*****************************
@@ -416,10 +426,10 @@ C        Assumes Temp will never be lower than 112, log10(pressure) never lower 
       PPLOG = AMIN1(PLOG(IL),0.)
       PPLOG = AMAX1(PPLOG,-4.)
       PP = AMAX1(P(IL),1.E-04)
-      PP = AMIN1(PP,1.)      
+      PP = AMIN1(PP,1.)
       ANEWBETA = 0.0
- 
-        
+
+
       IF(TP-112. < 76.) THEN
         AFT = (TP-112.)/76.
         LOGP = PPLOG-1
@@ -477,18 +487,18 @@ C        Assumes Temp will never be lower than 112, log10(pressure) never lower 
      1    BETACH4NEW(II,2,4,K3)+AFT*(1-AFP)*BETACH4NEW(II,3,4,K3)+
      2    AFP*(1-AFT)*BETACH4NEW(II,2,5,K3)
         END SELECT
-      END IF          
+      END IF
             TAUG(IL)= TAUG(IL) + ANEWBETA*CGAS(IL,2)  ! Change CH4 from 5 to 2
 c            print 9999,TAUG(IL),ANEWBETA
 c            print 9998,TP,LOGP
 c           print 9999,AFT,pp
 c 9998        format(1PE12.5,2x,I2) !EWS - not used
       END IF
- 
+
  1181    CONTINUE
 
 !               IF (IG1.LE.4) THEN
-C-rr           10/19/2010. Gas "3" is CO2 added 
+C-rr           10/19/2010. Gas "3" is CO2 added
 C               from Richard Freedmans eb.txt.
 C              For intervals 1-16 use Tom Ackerman's kcoefficients to get BETAs
 C              otherwise use Richard Freedman's.
@@ -500,22 +510,24 @@ C              otherwise use Richard Freedman's.
 ! 1185             CONTINUE
 !               END IF
 C
-              
-                  
-                       print *, 'CHECK B2' !Aoki2020d                                                                                                                                                                   
-      	      	   
+
+
+!                       print *, 'CHECK B2' !Aoki2020d
+
 !  TAU expression simplified so that all species are done within a single loop 3/19/2012
                   DO 1182 IL = 1, NLAYERS
                        BETACO2 = KAPPALAYERSOL_CO2(I,IL,K2) ! kappas for CO2 coefficients
                        BETAH2O = KAPPALAYERSOL_H2O(I,IL,K1) ! kappas for H2O coefficients
                        BETACO  = KAPPALAYERSOL_CO(I,IL,KK)  ! kappas for CO  coefficients Aoki2020
+                       !         print *, '===============solar==============='
+!                              print *,BETACO2,BETAH2O,BETACO !Aoki2020kd
 !                      if(I .eq. 9)then
 !                      print 9999, KAPPALAYERSOL_CO2(I,IL,K1)
 !     &                         ,KAPPALAYERSOL_H2O(I,IL,K1),
 !     &                          I,IL,K1, P(IL),TF(IL)
 !                       pause
 !                       endif
-                           
+
 !                       IF (I.ge.9)THEN
 !                       print *, BETACO2, BETAH2O, I, IL
 !                       pause
@@ -526,38 +538,53 @@ C
 
                        CGAS(IL,3) = AMAX1(CGAS(IL,3),1.E-20)
                        CGAS(IL,4) = AMAX1(CGAS(IL,4),1.E-20)
-                       TAUG(IL)= TAUG(IL) + BETAH2O*CGAS(IL,6) 
+                       TAUG(IL)= TAUG(IL) + BETAH2O*CGAS(IL,6)
      &                 + BETAO3(I)*CGAS(IL,4) ! FOR CGAS: Gas 3 is O2, Gas 4 is O3, Gas 5 is CO2, and Gas 6 is H2O. Gas 2 (CH4) is handled above)
 !                         if (IL.eq.1) then
 !                         print *, BETAO3(I)*2.687E19, I, CGAS(IL,1)
 !                         pause
 !                         endif
+
                        ELSEIF(I.eq.15) THEN
-                       TAUG(IL)= TAUG(IL) + BETACO2*CGAS(IL,5) + 
+                       TAUG(IL)= TAUG(IL) + BETACO2*CGAS(IL,5) +
      &                 BETAH2O*CGAS(IL,6)
+
+
                        ELSEIF(I.eq.16)THEN
-                       TAUG(IL) = TAUG(IL) + BETACO2*CGAS(IL,5) + 
-     &                 BETAH2O*CGAS(IL,6) + 
+                       TAUG(IL) = TAUG(IL) + BETACO2*CGAS(IL,5) +
+     &                 BETAH2O*CGAS(IL,6) +
      &                 BETAO2(KO2)*CGAS(IL,3)
+
 !                          print *, BETAO2, IL, I
 !                          pause
-                       ELSE ! For intervals 17-38 !CO absorption considered only 17 - 39 interval Aoki2020
-                       TAUG(IL)= TAUG(IL) + BETACO2*CGAS(IL,5) + 
-     &                 BETAH2O*CGAS(IL,6) + BETACO*CGAS(IL,9)
-                       ENDIF
+                      ELSE ! For intervals 17-39 !CO absorption considered only 17 - 39 interval Aoki2020
+                       TAUG(IL)= TAUG(IL) + BETACO2*CGAS(IL,5) +
+     &                 BETAH2O*CGAS(IL,6) + BETACO*CGAS_CO(IL)
+                       TAUALL(I,IL) = TAUALL(I,IL)+BETACO2*CGAS(IL,5) +
+     &                 BETAH2O*CGAS(IL,6) + BETACO*CGAS_CO(IL)
+                       TAUCO(I,IL)  = TAUCO(I,IL)+ BETACO*CGAS_CO(IL)
+                       TAUCO2(I,IL)  = TAUCO2(I,IL)+BETACO2*CGAS(IL,5)
+                       TAUH2O(I,IL)  =TAUH2O(I,IL)+ BETAH2O*CGAS(IL,6)
+                      ENDIF
 
 !                       if((I.gt.17).and.(IL.eq.50))then
-!                        print *, 'CGASH2O=', CGAS(IL,6), 
+!                        print *, 'CGASH2O=', CGAS(IL,6),
 !     &                  'CGASCO2=', CGAS(IL,5), IL
 !                        pause
 !                       print *, 'TAUG=', TAUG(IL)
 !                       pause
 !                       endif
  1182             CONTINUE
-                print *, 'CHECK B3' !Aoki2020d 
+
+
+
+
+
+
+!                print *, 'CHECK B3' !Aoki2020d
 !               IF (IG2.LE.4) THEN
 !                  DO 1190 IL=1,NLAYERS
- 
+
 !                    IF (I<17) THEN
 !                      L = INDEX(IL)
 !                      FR = FRAC(IL)
@@ -567,7 +594,7 @@ C
 !                       BETA = KMATRIX(I,IL,K1)
 !                       TAUG(IL)= TAUG(IL) + BETA*CGAS(IL,3)
 
-                    
+
 !                          ENDIF
 
 c-rr 6/7/2011 near IR CO2 CIA section------------------------------------------------------------------------
@@ -576,10 +603,10 @@ c-rr 6/7/2011 near IR CO2 CIA section-------------------------------------------
                      IF  ((I .EQ. 22).OR.(I.EQ.23).OR.(I.EQ.24))THEN  ! Put CO2 CIA in 1.2 micron complex
                      DO IL =1,NLAYERS
                      TAUG(IL) = TAUG(IL) + 1.5E-9*(CGAS(IL,5)
-     &                             /2.687E19)*FI(2,IL)*P(IL) ! Lochsmidt's value converts CGAS for CO2 from mol/cm^2 into atm-cm. The CIA values (i.e. 1.5E-9 are 
+     &                             /2.687E19)*FI(2,IL)*P(IL) ! Lochsmidt's value converts CGAS for CO2 from mol/cm^2 into atm-cm. The CIA values (i.e. 1.5E-9 are
 !                                                                      in inverse amagat^2cm. So tau is unitless.
                      ENDDO
-                  
+
 
                      ELSEIF(I.EQ.28) THEN ! Put CO2 CIA in 1.73 micron band
                       DO IL = 1, NLAYERS
@@ -593,17 +620,17 @@ c-rr 6/7/2011 near IR CO2 CIA section-------------------------------------------
      &                            /2.687E19)*FI(2,IL)*P(IL)
                      ENDDO
                   ENDIF
-                  print *, 'CHECK B3A' !Aoki2020d
-!                     ENDIF        
+!                  print *, 'CHECK B3A' !Aoki2020d
+!                     ENDIF
 C------------------------------------------------------------------------------------------
-                 
+
 
                DO 1200 IL=1,NLAYERS
 !                TAUG(IL) = AMAX1(TAUG(IL), 1.e-17)
-                    
-               TAULAM(IL) = TAUEXT(IL)+TAUR(IL)+TAUG(IL) 
+
+               TAULAM(IL) = TAUEXT(IL)+TAUR(IL)+TAUG(IL)
      &              + TAUCONTSOL(IL) ! Added tau for BPS continuum 8/28/2012
-                  print *, 'CHECK B3B' !Aoki2020d
+!                  print *, 'CHECK B3B' !Aoki2020d
 !              if(TF(ND) > 2200.0d0)then
 !              print 9999, TAULAM(IL), TAUG(IL),CGAS(IL,2),CGAS(IL,3),
 !     &                    CGAS(IL,4), CGAS(IL,5),IL,K1,K2,I
@@ -613,7 +640,7 @@ c                 print *, TAUEXT(1),TAUR(1),TAUG(1),TAUCONTSOL(1) !Aoki2020d
 c 9999   format(1P6E12.5,3(2x,I3), 2x,1p3e12.5) !EWS - not used
 c               TAULAM(IL) = AMIN1(TAULAM(IL),1000.)
                OMG0(IL) = TAUS(IL)/TAULAM(IL)
-                 print *, 'CHECK B3C' !Aoki2020d
+!                 print *, 'CHECK B3C' !Aoki2020d
 C  Do not let scattering albedo be larger than 0.99999.
                   OMG0(IL) = AMIN1(OMG0(IL),0.99999)
 C
@@ -624,16 +651,16 @@ C-AP                  FMT(IL) = TSRAT*FMA(I)
                   OMG0(IL) = AMAX1(OMG0(IL),1.E-5)! changed lower limit of single-scattering albedo to 1e-12 (default 1e-5) c-rr 4/30/2012
  1200          CONTINUE
                COUNTERS = COUNTERS + 1
-               IF(IL .LT. 10)THEN 
+               IF(IL .LT. 10)THEN
                   write(*,*) TAULAM(1),TAUEXT(1),TAUR(1),TAUG(1),
      &             TAUCONTSOL(1) !Aokix
                END IF
-               print *, 'CHECK B3 CALLDEL' !Aoki2020d
+!               print *, 'CHECK B3 CALLDEL' !Aoki2020d
                CALL DELTA2STR(SRFALB,AMU0,ASY,TAULAM,OMG0,FUP,FDN)
-               print *, 'CHECK B3 ENDDEL' !Aoki2020d
+!               print *, 'CHECK B3 ENDDEL' !Aoki2020d
 
                SUMAP = SUMAP + AP
-              
+
                J = 1
  1205          IF (J .LE. ND) THEN
                   FUPA(J)=FUPA(J)+AP*FUP(J)
@@ -647,43 +674,43 @@ C-AP                  FMT(IL) = TSRAT*FMA(I)
                END IF
 C         WEIGHT = WEIGHT + AP
 C
-         print *, 'CHECK B4' !Aoki2020d
+c         print *, 'CHECK B4' !Aoki2020d
  1170    CONTINUE             !**END NPR1 LOOP ! H2O
  1175 CONTINUE                  !**END NPR2 LOOP ! CO2
 10101 CONTINUE                  !**END LOOP ! CO Aoki2020
 ! 1180    CONTINUE                !**END NPR3 LOOP ! CH4
 ! 1190    CONTINUE                ! ENDS KO2 loop
 !            print *, 'SUMAP=', SUMAP
-            
+
          DO 1210 J=1,ND
              FDNSOL(J)=FDNSOL(J)+SOLINT(I)*FDNA(J)
              FUPSOL(J)=FUPSOL(J)+SOLINT(I)*FUPA(J)
-             
+
              if (J.eq.1) then ! Print out fupsol and fdnsol to calculate planetary albedo per wavelength bin
                           write(93,*) FUPSOL(J), FDNSOL(J)
                          elseif(J.eq.ND)then  ! Print out fluxes per wavelength
-                         write(91,*) FDNSOL(J)-FUPSOL(J),SOLINT(I) 
+                         write(91,*) FDNSOL(J)-FUPSOL(J),SOLINT(I)
 c                    print *, SOLINT(I)*FDNA(J) - SOLINT(I)*FUPA(J)
                          ENDIF
 C-rr         PLAYING AROUND WITH FLUXES HERE
 c             IF ((I==26).and.(J==95)) THEN
-c             print *, 'FDNSOL=',FDNSOL(J),'FUPSOL=',FUPSOL(J)             
+c             print *, 'FDNSOL=',FDNSOL(J),'FUPSOL=',FUPSOL(J)
 c             ENDIF
              Fdiff(J) = SOLINT(I)*(FDNA(J)-FUPA(J))
-c              CPCO2 = 7.7 + 5.3E-3*TF(J) - 8.3E-7*TF(J)*TF(J) 
+c              CPCO2 = 7.7 + 5.3E-3*TF(J) - 8.3E-7*TF(J)*TF(J)
 c-rr              Putting new CPCO2 parametrization here. Why is there no FCH4?
-c              CPCO2 = 5.89 + 6.06E-3*TF(J) + 2.39E-5*TF(J)*TF(J) 
-c     &        -3.44E-8*TF(J)*TF(J)*TF(J)  
+c              CPCO2 = 5.89 + 6.06E-3*TF(J) + 2.39E-5*TF(J)*TF(J)
+c     &        -3.44E-8*TF(J)*TF(J)*TF(J)
 c                if (j.eq.1)print *, 'CPCO2=', CPCO2
 c                 CPN2 = 6.76 + 6.06E-4*TF(J) + 1.3E-7*TF(J)*TF(J)
 c-rr              CPO2 = 8.27 + 2.58E-4*TF(J) - 1.877E5/TF(J)/TF(J)
 c              Putting new CPO2 parametrization 3/28/11
-c              CPO2 = 7.47 -4.84E-3*TF(J) + 1.38E-5*TF(J)*TF(J) 
+c              CPO2 = 7.47 -4.84E-3*TF(J) + 1.38E-5*TF(J)*TF(J)
 c     &        -8.73E-9*TF(J)*TF(J)*TF(J) - 1.76E-9/TF(J)/TF(J)
 c                 CPO2 = AMAX1(CPO2,CPN2)
 c              CPN = FCO2*CPCO2 + FN2*CPN2 + FO2*CPO2 + FAR*4.97
 c              CPNT(J) = CPN*4.18*1.E7/DM
-c            IF(J.eq.ND) CPNT(J)= 50.* 4.18*1.E7 
+c            IF(J.eq.ND) CPNT(J)= 50.* 4.18*1.E7
 
 
 !             print *,FDNSOL(J),FUPSOL(J),J
@@ -696,19 +723,19 @@ c            IF(J.eq.ND) CPNT(J)= 50.* 4.18*1.E7
            DFdiff=Fdiff(J+1)-Fdiff(J)
            SolHeat(I,J)=-(DFdiff*GNEW(J)/CPNT(J)
      &                   /(PF1(J+1)-PF1(J))*86400)
-         END DO          
+         END DO
         END IF
 c      print 99999, i,fupa(1)
 c 99999 format(1x,'i =',i2,2x,1pe10.3) !EWS - not used
- 
-        
+
+
 c        IF (NST.eq.100)then
 c        print *, TAUG(IL),ALAMBDA(I),I
 c        endif
 
  1155 CONTINUE                   !**END WAVELENGTH LOOP**
 
-        IF (LAST .EQ. 1) THEN       
+        IF (LAST .EQ. 1) THEN
         do k=1,5
          istart = (k-1)*9 + 1
          istop = istart + 8
@@ -720,10 +747,9 @@ c        endif
         enddo
         CLOSE(96)
         END IF
- 456        FORMAT(9x,9I10)           
+ 456        FORMAT(9x,9I10)
  457    FORMAT(1P10E10.2)
 
 c        write(*,*) TAULAM(1),TAUEXT(1),TAUR(1),TAUG(1),TAUCONTSOL(1)!Aokix
-
       RETURN
       END
